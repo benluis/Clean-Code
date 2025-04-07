@@ -1,28 +1,31 @@
+# internal 
+from lib.create_user import handle_creat_user
+
+# external 
 from fastapi import FastAPI, Request
+from pydantic import BaseModel, EmailStr
 
-app = FastAPI()
-users = []
-counter = 1
+# built in
 
-@app.post("/user")
 
-async def create_user(req: Request):
+class User(BaseModel):
+    name: str
+    email: EmailStr
 
-    global counter
-    # Stores data from json
-    data = await req.json()
-    name = data["n"]
-    email = data["e"]
+class UserOutput(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
 
-    for u in users:
-        if u["e"] == email:
-            return {"error": "taken"}
 
-    new_user = {"id": counter, "n": name, "e": email}
-    counter += 1
-    users.append(new_user) # Adds user to the list
-    return new_user
+app: FastAPI = FastAPI()
+users: list[User] = []
+user_counter: int = 0
 
-@app.get("/users")
-def get_all():
+@app.post("/user", response_model=UserOutput, status_code=201)
+async def create_user(user: User) -> UserOutput:
+    return handle_creat_user(user)
+
+@app.get("/users", response_model=list[User], status_code=200)
+def get_all_users() -> list[User]:
     return users
