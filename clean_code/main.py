@@ -1,28 +1,30 @@
+# internal
+# what i wrote
+from lib.create_user import handle_create_user
+
+# external
+# dependency functions
 from fastapi import FastAPI, Request
+from pydantic import BaseModel, EmailStr
+# pydantic objects like a java class and BaseModel is like Objects class of Java
 
-app = FastAPI()
-users = []
-counter = 1
+# built-in
+class User(BaseModel):
+    name: str
+    email: EmailStr
+    # ensures typesafety as well
 
-@app.post("/user")
-
-async def create_user(req: Request):
-
-    global counter
-    # Stores data from json
-    data = await req.json()
-    name = data["n"]
-    email = data["e"]
-
-    for u in users:
-        if u["e"] == email:
-            return {"error": "taken"}
-
-    new_user = {"id": counter, "n": name, "e": email}
-    counter += 1
-    users.append(new_user) # Adds user to the list
-    return new_user
-
-@app.get("/users")
-def get_all():
+class UserOutput(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
+app: FastAPI = FastAPI() #type hinting
+users: list[User] = []
+counter: int = 0
+@app.post("/user", response_model=UserOutput, status_code=201)
+#response model is used for the fastapi documentation to find useroutput and find successful output code is 201
+async def create_user(user: User) -> UserOutput:
+    return handle_create_user(user)
+@app.get("/users", response_model=list[User], status_code=200)
+def get_all_users() -> list[User]:
     return users
